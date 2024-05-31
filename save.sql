@@ -1,0 +1,7 @@
+CREATE TABLE IF NOT EXISTS public.fortestdb
+(
+    Id SERIAL PRIMARY KEY,
+	Name VARCHAR(30) NOT NULL,
+	Age INTEGER DEFAULT 18
+);
+SELECT * FROM public.fortestdb
