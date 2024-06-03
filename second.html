@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Users</title>
+    </head>
+    <body>
+        <table>
+            <thead><th>Id</th><th>Name</th><th>Age</th></thead>
+            {{range . }}
+            <tr>
+                <td>{{.Id}}</td>
+                <td>{{.Name}}</td>
+                <td>{{.Age}}</td>
+            </tr>
+            {{end}}
+        </table>
+    </body>
+</html>
