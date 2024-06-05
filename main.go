@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/labstack/echo/v4"
 	_ "github.com/lib/pq"
@@ -20,21 +21,6 @@ type User struct {
 var database *sql.DB
 
 func home(c echo.Context) error {
-	if c.Request().Method == http.MethodPost {
-		id := c.FormValue("id")
-		name := c.FormValue("name")
-		age := c.FormValue("age")
-
-		_, err := database.Exec("INSERT INTO public.fortestdb (id, name, age) VALUES ($1, $2, $3)", id, name, age)
-		if err != nil {
-			log.Println(err)
-		}
-		return c.Redirect(http.StatusMovedPermanently, "/")
-	}
-	return c.File("hello.html")
-}
-
-func secPage(c echo.Context) error {
 	var u User
 	rows, err := database.Query("SELECT * FROM public.fortestdb")
 	if err != nil {
@@ -51,7 +37,71 @@ func secPage(c echo.Context) error {
 		user = append(user, u)
 	}
 	tmpl, _ := template.ParseFiles("second.html")
-	return tmpl.Execute(c.Response().Writer, user)
+	tmpl.Execute(c.Response().Writer, user)
+
+	return c.File("hello.html")
+}
+
+func createUser(c echo.Context) error {
+	if c.Request().Method == http.MethodPost {
+		id := c.FormValue("id")
+		name := c.FormValue("name")
+		age := c.FormValue("age")
+
+		_, err := database.Exec("INSERT INTO public.fortestdb (id, name, age) VALUES ($1, $2, $3)", id, name, age)
+		if err != nil {
+			log.Println(err)
+		}
+		return c.Redirect(http.StatusMovedPermanently, "/")
+	}
+	return c.JSON(http.StatusMethodNotAllowed, map[string]string{"message": "Method Not Allowed"})
+}
+
+func deleteUser(c echo.Context) error {
+	id := c.Param("id")
+
+	idInt, err := strconv.Atoi(id)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"message": "Invalid ID"})
+	}
+
+	_, err = database.Exec("DELETE FROM public.fortestdb WHERE id = $1", idInt)
+	if err != nil {
+		log.Println(err)
+	}
+
+	return c.Redirect(http.StatusMovedPermanently, "/")
+}
+
+func editPage(c echo.Context) error {
+	id := c.Param("id")
+
+	row := database.QueryRow("select * from public.fortestdb where id = $1", id)
+	user := User{}
+	err := row.Scan(&user.Id, &user.Name, &user.Age)
+	if err != nil {
+		log.Println(err)
+	}
+	tmpl, _ := template.ParseFiles("update.html")
+	tmpl.Execute(c.Response().Writer, user)
+
+	return nil
+}
+
+func editUser(c echo.Context) error {
+	if c.Request().Method == http.MethodPost {
+		id := c.FormValue("id")
+		name := c.FormValue("name")
+		age := c.FormValue("age")
+
+		_, err := database.Exec("update public.fortestdb set name=$1, age=$2 where id = $3",
+			name, age, id)
+		if err != nil {
+			log.Println(err)
+		}
+		return c.Redirect(http.StatusMovedPermanently, "/")
+	}
+	return c.JSON(http.StatusMethodNotAllowed, map[string]string{"message": "Method Not Allowed"})
 }
 
 func main() {
@@ -64,9 +114,23 @@ func main() {
 	defer db.Close()
 
 	e := echo.New()
+
+	e.Use(echo.MiddlewareFunc(func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			if c.Request().Method == "POST" {
+				method := c.FormValue("_method")
+				if method != "" {
+					c.Request().Method = method
+				}
+			}
+			return next(c)
+		}
+	}))
 	e.GET("/", home)
-	e.POST("/", home)
-	e.GET("/users", secPage)
+	e.POST("/", createUser)
+	e.GET("/edit/:id", editPage)
+	e.POST("/edit/:id", editUser)
+	e.POST("/delete/:id", deleteUser)
 
 	fmt.Println("loading...")
 	e.Start(":8181")

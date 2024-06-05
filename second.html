@@ -1,19 +1,30 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <meta charset="UTF-8">
-        <title>Users</title>
-    </head>
-    <body>
-        <table>
-            <thead><th>Id</th><th>Name</th><th>Age</th></thead>
-            {{range . }}
-            <tr>
-                <td>{{.Id}}</td>
-                <td>{{.Name}}</td>
-                <td>{{.Age}}</td>
-            </tr>
-            {{end}}
-        </table>
-    </body>
+<head>
+    <meta charset="UTF-8">
+    <title>Users</title>
+</head>
+<body>
+    <table>
+        <thead>
+            <th>Id</th>
+            <th>Name</th>
+            <th>Age</th>
+        </thead>
+        {{range . }}
+        <tr>
+            <td>{{.Id}}</td>
+            <td>{{.Name}}</td>
+            <td>{{.Age}}</td>
+            <td>
+                <a href="/edit/{{.Id}}">Изменить</a> |
+                <form method="POST" action="/delete/{{ .Id }}" style="display:inline;">
+                    <input type="hidden" name="_method" value="DELETE">
+                    <input type="submit" value="Удалить">
+                </form>
+            </td>
+        </tr>
+        {{end}}
+    </table>
+</body>
 </html>
