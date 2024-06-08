@@ -20,7 +20,7 @@ type User struct {
 
 var database *sql.DB
 
-func home(c echo.Context) error {
+func homee(c echo.Context) error {
 	var u User
 	rows, err := database.Query("SELECT * FROM public.fortestdb")
 	if err != nil {
@@ -126,7 +126,7 @@ func main() {
 			return next(c)
 		}
 	}))
-	e.GET("/", home)
+	e.GET("/", homee)
 	e.POST("/", createUser)
 	e.GET("/edit/:id", editPage)
 	e.POST("/edit/:id", editUser)
