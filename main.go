@@ -36,10 +36,10 @@ func homee(c echo.Context) error {
 		}
 		user = append(user, u)
 	}
-	tmpl, _ := template.ParseFiles("second.html")
+	tmpl, _ := template.ParseFiles("get.html")
 	tmpl.Execute(c.Response().Writer, user)
 
-	return c.File("hello.html")
+	return c.File("create.html")
 }
 
 func createUser(c echo.Context) error {
